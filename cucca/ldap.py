@@ -1,87 +1,48 @@
-import sys
-from ldap3 import Server, Connection, ALL, NTLM, ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES, AUTO_BIND_NO_TLS, SUBTREE
-from ldap3.core.exceptions import LDAPCursorError
+from ldap3 import Server, Connection, Reader, ObjectDef, SUBTREE, BASE, ALL_ATTRIBUTES, ObjectDef, AttrDef, Reader, Entry, Attribute, OperationalAttribute
+import yaml
 import ast
 
-# Define Auth Info
-server_name = '192.168.10.10'
-domain_name = 'ciscocollab.ninja'
-user_name = 'svc-ldap'
-password = 'Ciscocollab41!'
 
-#format_string = '{:40}   {}'
-#print(format_string.format('Group', 'Description'))
+#Read in Configuration Variables from config.yml
+print('Reading Configuration File')
+with open('config.yml', 'r') as ymlfile:
+    config = yaml.load(ymlfile)
 
-# Set Server Info
-server = Server(server_name, get_info=None)
-# server = Server('dc01.ciscocollab.ninja')
+VAR_LDAP_SERVER = config["ldap"]["server"]
+VAR_LDAP_PORT = config["ldap"]["port"]
+VAR_LDAP_SSL = config["ldap"]["ssl"]
+VAR_LDAP_USERNAME = config["ldap"]["username"]
+VAR_LDAP_PASSWORD = config["ldap"]["password"]
+VAR_LDAP_SEARCH_BASE = config["ldap"]["searchbase"]
+VAR_LDAP_GROUP = config["ldap"]["querygroup"]
+VAR_LDAP_ATTRIBUTE = config["ldap"]["attribute"]
+VAR_MAIL_SERVER = config["mail"]["server"]
+VAR_MAIL_PORT = config["mail"]["port"]
+VAR_MAIL_AUTH = config["mail"]["auth"]
+VAR_MAIL_PASSWORD = config["mail"]["password"]
+VAR_MAIL_SENDER = config["mail"]["sender"]
+VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
+print('Reading Configuration File Complete')
 
-# Connect to Server
-conn = Connection(server, user="svc-ldap@ciscocollab.ninja",password="Ciscocollab41!",auto_bind=AUTO_BIND_NO_TLS,check_names=False)
-# conn = Connection(server, user="svc-ldap@ciscocollab.ninja",password="Ciscocollab41!",auto_bind=AUTO_BIND_NO_TLS,check_names=True)
-# conn = Connection(server, user='{}\\{}'.format(domain_name, user_name), password=password, authentication=NTLM, auto_bind=True)
-#  No Filter
-#conn.search(search_base='DC=ciscocollab,DC=ninja',search_filter='(objectCategory=person)', search_scope=SUBTREE, size_limit=0)
-#conn = Connection(
-#    server,
-#    user='{}\\{}'.format(domain_name, user_name),
-#    password=password
-#    auto_bind=AUTO_BIND_NO_TLS,
-#    check_names=True
-#)
+#Connect to LDAP Services
+print('Capturing Group Membership')
+server = Server(VAR_LDAP_SERVER, port=VAR_LDAP_PORT, use_ssl=VAR_LDAP_SSL, get_info=None)
+ldapbind = Connection(server, user=VAR_LDAP_USERNAME, password=VAR_LDAP_PASSWORD, auto_bind=True)
+ldapbind.search(search_base=VAR_LDAP_SEARCH_BASE, search_filter=VAR_LDAP_GROUP, attributes=VAR_LDAP_ATTRIBUTE, search_scope=SUBTREE, size_limit=0)
+print('Group Membership Captured')
 
-print("LDAP Connecton complete")
-
-
-#  Search With Filter by Group WebEx Users
-conn.search(search_base='DC=ciscocollab,DC=ninja',search_filter='(&(memberof=CN=WebEx Users,CN=Users,DC=ciscocollab,DC=ninja))', attributes='sAMAccountName',search_scope=SUBTREE, size_limit=0)
-
-
-result = ast.literal_eval(conn.response_to_json())
-
-# ldapusers = {} <-- REMOVE
-ldapuser = []
-# print(type(result))
-
+#Parsing LDAP Data
+print('Parsing Group Membership')
+# ldap_membership_json=(ldapbind.response_to_json())
+result = ast.literal_eval(ldapbind.response_to_json())
+ldapuser =[]
 
 if result['entries'] is not None:
-        for entry in result['entries']: # user is a list of dictionaries, containing user info
-            #print(entry['attributes']['sAMAccountName'])
-            ldapuser.append(entry['attributes']['sAMAccountName'])
-            #add2dict = entry['attributes']['sAMAccountName']
-            #print(type(add2dict))
-            #users[add2dict] = {}
-            #users[user] = {}
-            #users[entry['attributes']] = {}  # Adds to the users dictionary a blank dictionary based on the name of the value of user['userid']
-            #users[user['userid']]['uuid'] = user['uuid'] #  Adds uuid key
-            #users[user['userid']]['firstName'] = user['firstName']
-            #users[user['userid']]['lastName'] = user['lastName']
-            #users[user['userid']]['homeCluster'] = user['homeCluster']
-            #users[user['userid']]['imAndPresenceEnable'] = user['imAndPresenceEnable']
-            #users[user['userid']]['serviceProfile'] = user['serviceProfile']
-# print(ldapuser)
+    for entry in result['entries']: # user is a list of dictionaries, containing user info
+        ldapuser.append(entry['attributes']['sAMAccountName'])
 
 ldapuserlist = [''.join(x) for x in ldapuser] # This converts user(list of lists) to just a list of users
 print(ldapuserlist)
-
-# Moved below to cucca.py
-# for entry in ldapuserlist:
-#    ldapusers[entry] = {}  # Creates a dictonary per user as a key in the dictonary users
-
-# for u_id, u_info in ldapusers.items():
-#     print("\nPerson ID:", u_id)
-#     for key in u_info:
-#         print(key + ':', u_info[key])
-# End Moved Code
-
-
-#conn.search('dc={},dc=local'.format(domain_name), '(objectclass=group)', attributes=[ALL_ATTRIBUTES, ALL_OPERATIONAL_ATTRIBUTES])
-
-#for e in sorted(conn.entries):
-#    try:
-#        desc = e.description
-#    except LDAPCursorError:
-#        desc = ""
-#    print(format_string.format(str(e.name), desc))
-
-#ldap3.Reader(c, person, '(&(member=CN=myuser_in_full_name,OU=xxx,OU=xxxxxx,DC=mydomain,DC=com)(objectClass=group))', 'dc=mydomain,dc=com').search()
+numberofldapusers = len(ldapuserlist)
+print(numberofldapusers)
+print('Parsing Group Membership Completed')
