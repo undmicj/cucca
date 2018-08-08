@@ -1,0 +1,16 @@
+ldap:
+  server: dc01.ciscocollab.ninja
+  port: 636
+  ssl: True
+  username: svc-ldap@ciscocollab.ninja
+  password: Ciscocollab41!
+  searchbase: DC=ciscocollab,DC=ninja
+  querygroup: (&(memberof=CN=Compliance Users,CN=Users,DC=ciscocollab,DC=ninja))
+  attribute: sAMAccountName
+mail:
+  server: smtp.office365.com
+  port: 587
+  auth: cclouse@ciscocollab.ninja
+  password:
+  sender: cclouse@ciscocollab.ninja
+  recipient: cclouse@ciscocollab.ninja
