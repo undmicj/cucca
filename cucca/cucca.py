@@ -12,7 +12,7 @@ import email
 # test commit
 def uds(username):
     r = requests.get("https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username, verify=False)
-    print("UDS http URL for user", username, "is", "https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username)
+    # print("UDS http URL for user", username, "is", "https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username)
     # print(r.status_code)
     # print(r.headers)
     # print(r.content)
@@ -63,10 +63,10 @@ def email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD):
     except:
         print('Error: Unable to Send Report')
 
-print('Reading Configuration File')
+# print('Reading Configuration File')
 with open('config.yml', 'r') as ymlfile:
     config = yaml.load(ymlfile)
-print('Reading Configuration File Complete')
+# print('Reading Configuration File Complete')
 
 # SET UDS SERVER
 VAR_UDS_FQDN = config["uds"]["server"]  # VAR_UDS_FQDN = 'cucm2.ciscocollab.ninja'
@@ -82,7 +82,7 @@ ldapusers = {}
 for ldapuser in ldapuserlist:
     ldapusers[ldapuser] = {}
     ldapusers[ldapuser]['udsHomeCluster'] = uds(ldapuser)  # Query UDS for home cluster and store the value in the user dict
-    print("UDS URL SAYS HOME CLUSTER IS", ldapusers[ldapuser]['udsHomeCluster'], "FOR", ldapuser)
+    # print("UDS URL SAYS HOME CLUSTER IS", ldapusers[ldapuser]['udsHomeCluster'], "FOR", ldapuser)
     if ldapusers[ldapuser]['udsHomeCluster'] == "ciscocucmpub.ciscocollab.ninja":
         result = axl1.list_users(userid=ldapuser)
     elif ldapusers[ldapuser]['udsHomeCluster'] == "cucm2.ciscocollab.ninja":
@@ -102,26 +102,29 @@ for ldapuser in ldapuserlist:
             ldapusers[user['userid']]['imAndPresenceEnable'] = user['imAndPresenceEnable']
             ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
 
-
+noncompliant =[]
+compliant = []
 # PRINT USER DICTIONARIES AND CAPTURE COMPLIANCE
 for u_id, u_info in ldapusers.items():
-    print("\nuserid:", u_id)
+    # print("\nuserid:", u_id)
     for key in u_info:
-        print(key + ':', u_info[key])
+        # print(key + ':', u_info[key])
         if key == 'imAndPresenceEnable':
             if u_info[key] == 'true':
-                print(u_id, "is enabled for IM&P")
+                noncompliant.append(u_id)
+                # print(u_id, "is enabled for IM&P")
 
-#for username in ldapusers:
-#    print(username)
-#    #print("IM enabled for ", username, "?", ldapusers[username]['imAndPresenceEnable'])  # PRINTS VALUE OF cclouse imAndPresenceEnable key
-#    if ldapusers[username]['imAndPresenceEnable'] == 'true':
-#        print(username, "is enabled for IM&P")
-    #print("Service profile for ", username, "is", ldapusers[username]['serviceProfile']['_value_1'])  # PRINTS VALUE OF cclouse service profile key
+# DISPLAY COMPLIANCE
+print("The following users are non-compliant:")
+for user in noncompliant:
+    print(user)
+print("...")
+print("The following users are compliant:")
+for user in compliant:
+    print(user)
 
-#    print(username['serviceProfile'])
 
-
+print('...')
 print("Done.")
 
 #email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD)

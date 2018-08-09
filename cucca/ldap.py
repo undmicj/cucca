@@ -41,7 +41,8 @@ if result['entries'] is not None:
         ldapuser.append(entry['attributes']['sAMAccountName'])
 
 ldapuserlist = [''.join(x) for x in ldapuser]  # This converts user(list of lists) to just a list of users
-print(ldapuserlist)
+# print(ldapuserlist)
 numberofldapusers = len(ldapuserlist)
 print(" Number of LDAP users is:", numberofldapusers)
 print('Parsing Group Membership Completed')
+print("...")
