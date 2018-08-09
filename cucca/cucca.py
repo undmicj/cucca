@@ -27,6 +27,42 @@ def uds(username):
         userHomeCluster = item.text
     return userHomeCluster
 
+
+def email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD):
+    #Prepare Results to Email Recipient
+    print('Preparing Email')
+    todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
+    #message = EmailMessage()
+    #message ['Subject'] = "CDW Unified Communications Compliance Audit for " + todaysDate
+    #message ['From'] = VAR_MAIL_SENDER
+    #message ['To'] = VAR_MAIL_RECIPIENT
+    #message = MIMEMultipart()
+    #messagebody ='CDW Unified Communications Compliance Audit for ' + todaysDate + '\n' +
+    #'There are currently ' + numberofldapusers + 'associates in ' + VAR_LDAP_GROUP + '\n' +
+    #'There are currently ' + 'COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
+    #'There are currently ' + 'NON-COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
+    #'There are currently ' + 'UNPROVISIONED associates in ' + VAR_LDAP_GROUP
+    #messagebody = MIMEText(messagebody)
+    #message.attach(messagebody)
+    #message.set_content(messagebody)
+
+    #Send Results to Email Recipient
+    print('Preparing Email Completed')
+
+    try:
+        print('Sending Report')
+        mailserver = smtplib.SMTP(VAR_MAIL_SERVER, VAR_MAIL_PORT)
+        mailserver.ehlo()
+        mailserver.starttls()
+        mailserver.ehlo()
+        mailserver.login(VAR_MAIL_AUTH, VAR_MAIL_PASSWORD)
+        mailserver.set_debuglevel(0)
+        mailserver.send_message(message)
+        mailserver.quit()
+        print('Sending Report Complete')
+    except:
+        print('Error: Unable to Send Report')
+
 print('Reading Configuration File')
 with open('config.yml', 'r') as ymlfile:
     config = yaml.load(ymlfile)
@@ -67,44 +103,25 @@ for ldapuser in ldapuserlist:
             ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
 
 
-# PRINT USER DICTIONARIES
+# PRINT USER DICTIONARIES AND CAPTURE COMPLIANCE
 for u_id, u_info in ldapusers.items():
     print("\nuserid:", u_id)
     for key in u_info:
         print(key + ':', u_info[key])
+        if key == 'imAndPresenceEnable':
+            if u_info[key] == 'true':
+                print(u_id, "is enabled for IM&P")
+
+#for username in ldapusers:
+#    print(username)
+#    #print("IM enabled for ", username, "?", ldapusers[username]['imAndPresenceEnable'])  # PRINTS VALUE OF cclouse imAndPresenceEnable key
+#    if ldapusers[username]['imAndPresenceEnable'] == 'true':
+#        print(username, "is enabled for IM&P")
+    #print("Service profile for ", username, "is", ldapusers[username]['serviceProfile']['_value_1'])  # PRINTS VALUE OF cclouse service profile key
+
+#    print(username['serviceProfile'])
+
 
 print("Done.")
 
-#Prepare Results to Email Recipient
-print('Preparing Email')
-todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
-#message = EmailMessage()
-#message ['Subject'] = "CDW Unified Communications Compliance Audit for " + todaysDate
-#message ['From'] = VAR_MAIL_SENDER
-#message ['To'] = VAR_MAIL_RECIPIENT
-#message = MIMEMultipart()
-#messagebody ='CDW Unified Communications Compliance Audit for ' + todaysDate + '\n' +
-#'There are currently ' + numberofldapusers + 'associates in ' + VAR_LDAP_GROUP + '\n' +
-#'There are currently ' + 'COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
-#'There are currently ' + 'NON-COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
-#'There are currently ' + 'UNPROVISIONED associates in ' + VAR_LDAP_GROUP
-#messagebody = MIMEText(messagebody)
-#message.attach(messagebody)
-#message.set_content(messagebody)
-
-#Send Results to Email Recipient
-print('Preparing Email Completed')
-
-try:
-    print('Sending Report')
-    mailserver = smtplib.SMTP(VAR_MAIL_SERVER, VAR_MAIL_PORT)
-    mailserver.ehlo()
-    mailserver.starttls()
-    mailserver.ehlo()
-    mailserver.login(VAR_MAIL_AUTH, VAR_MAIL_PASSWORD)
-    mailserver.set_debuglevel(0)
-    mailserver.send_message(message)
-    mailserver.quit()
-    print('Sending Report Complete')
-except:
-    print('Error: Unable to Send Report')
+#email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD)
