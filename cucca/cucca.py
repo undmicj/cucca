@@ -4,6 +4,10 @@ from ldap import ldapuserlist
 import xml.etree.ElementTree as ET
 import requests
 import yaml
+import smtplib
+import datetime
+import ast
+import email
 
 # test commit
 def uds(username):
@@ -73,15 +77,36 @@ for u_id, u_info in ldapusers.items():
 
 print("Done.")
 
-#print(users)
+#Prepare Results to Email Recipient
+print('Preparing Email')
+todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
+#message = EmailMessage()
+#message ['Subject'] = "CDW Unified Communications Compliance Audit for " + todaysDate
+#message ['From'] = VAR_MAIL_SENDER
+#message ['To'] = VAR_MAIL_RECIPIENT
+#message = MIMEMultipart()
+#messagebody ='CDW Unified Communications Compliance Audit for ' + todaysDate + '\n' +
+#'There are currently ' + numberofldapusers + 'associates in ' + VAR_LDAP_GROUP + '\n' +
+#'There are currently ' + 'COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
+#'There are currently ' + 'NON-COMPLIANT associates in ' + VAR_LDAP_GROUP + '\n' +
+#'There are currently ' + 'UNPROVISIONED associates in ' + VAR_LDAP_GROUP
+#messagebody = MIMEText(messagebody)
+#message.attach(messagebody)
+#message.set_content(messagebody)
 
+#Send Results to Email Recipient
+print('Preparing Email Completed')
 
-# Total Users
-
-# Compliant
-# Not enabled for IM&P
-# Non-Compliant
-# in group, enabled for IM&P
-
-# Unprovisioned
-# No UDS
+try:
+    print('Sending Report')
+    mailserver = smtplib.SMTP(VAR_MAIL_SERVER, VAR_MAIL_PORT)
+    mailserver.ehlo()
+    mailserver.starttls()
+    mailserver.ehlo()
+    mailserver.login(VAR_MAIL_AUTH, VAR_MAIL_PASSWORD)
+    mailserver.set_debuglevel(0)
+    mailserver.send_message(message)
+    mailserver.quit()
+    print('Sending Report Complete')
+except:
+    print('Error: Unable to Send Report')
