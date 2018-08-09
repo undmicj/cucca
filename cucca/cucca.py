@@ -1,5 +1,4 @@
 from axltoolkit import AxlToolkit
-from credentials import user, password, platform_user, platform_password, axl_creds
 from ldap import ldapuserlist
 import xml.etree.ElementTree as ET
 import requests
@@ -9,7 +8,6 @@ import datetime
 import ast
 import email
 
-# test commit
 def uds(username):
     r = requests.get("https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username, verify=False)
     print("UDS http URL for user", username, "is", "https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username)
