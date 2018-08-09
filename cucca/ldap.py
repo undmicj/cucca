@@ -2,7 +2,6 @@ from ldap3 import Server, Connection, Reader, ObjectDef, SUBTREE, BASE, ALL_ATTR
 import yaml
 import ast
 
-
 # Read in Configuration Variables from config.yml
 print('Reading Configuration File')
 with open('config.yml', 'r') as ymlfile:

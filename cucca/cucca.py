@@ -27,7 +27,6 @@ def uds(username):
         userHomeCluster = item.text
     return userHomeCluster
 
-
 print('Reading Configuration File')
 with open('config.yml', 'r') as ymlfile:
     config = yaml.load(ymlfile)
@@ -41,7 +40,6 @@ axl1 = AxlToolkit(username=config["axl1"]["username"], password=config["axl1"]["
 axl2 = AxlToolkit(username=config["axl2"]["username"], password=config["axl2"]["password"], server_ip=config["axl2"]["server_ip"], tls_verify=False, version='12.0')
 axl3 = AxlToolkit(username=config["axl3"]["username"], password=config["axl3"]["password"], server_ip=config["axl3"]["server_ip"], tls_verify=False, version='12.0')
 axl4 = AxlToolkit(username=config["axl4"]["username"], password=config["axl4"]["password"], server_ip=config["axl4"]["server_ip"], tls_verify=False, version='12.0')
-
 
 ldapusers = {}
 
