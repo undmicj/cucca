@@ -10,25 +10,28 @@ ldap:
 mail:
   server: smtp.office365.com
   port: 587
+  auth_required: True
   auth: cclouse@ciscocollab.ninja
   password:
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja
 uds:
-  server: cucm2.ciscocollab.ninja
-axl1:
-  username: axl-cer
-  password: ccievoice
-  server_ip: 192.168.10.200
-axl2:
-  username: axlapi
-  password: ccievoice
-  server_ip: 192.168.10.220
-axl3:
-  username: axlapi
-  password: ccievoice
-  server_ip:
-axl4:
-  username: axlapi
-  password: ccievoice
-  server_ip:
+  server:
+cucm:
+  primary_uds_server: cucm2.ciscocollab.ninja
+  cluster1:
+    username: axl-cer
+    password: ccievoice
+    server_ip: 192.168.10.200
+  cluster2:
+    username: axlapi
+    password: ccievoice
+    server_ip: 192.168.10.220
+  cluster3:
+    username:
+    password:
+    server_ip:
+  cluster4:
+    username:
+    password:
+    server_ip:

@@ -9,6 +9,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging.config
 import logging
 import os
+import sqlite3
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -61,7 +62,7 @@ class AxlToolkit:
         self.session.verify = tls_verify
         filedir = os.path.dirname(__file__)
 
-        self.cache = SqliteCache(path='/tmp/sqlite_{0}.db'.format(server_ip), timeout=60)
+        self.cache = SqliteCache(path='sqlite_{0}.db'.format(server_ip), timeout=60)
 
         if version == '12.0':
             self.wsdl = os.path.join(filedir, 'schema/12.0/AXLAPI.wsdl')

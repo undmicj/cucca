@@ -1,12 +1,25 @@
 from axltoolkit import AxlToolkit
-from ldap import ldapuserlist
+from ldap import ldapuserlist, numberofldapusers, VAR_LDAP_GROUP
 import xml.etree.ElementTree as ET
 import requests
 import yaml
 import smtplib
 import datetime
-import ast
 import email
+import ast
+
+# INITIALIZE CONFIG FILE AND READ IN VARIABLES
+# print('Reading Configuration File')
+with open('config.yml', 'r') as ymlfile:
+    config = yaml.load(ymlfile)
+
+VAR_MAIL_SERVER = config["mail"]["server"]
+VAR_MAIL_PORT = config["mail"]["port"]
+VAR_MAIL_AUTH = config["mail"]["auth"]
+VAR_MAIL_PASSWORD = config["mail"]["password"]
+VAR_MAIL_SENDER = config["mail"]["sender"]
+VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
+# print('Reading Configuration File Complete')
 
 def uds(username):
     r = requests.get("https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username, verify=False)
@@ -27,7 +40,7 @@ def uds(username):
 
 
 def email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD):
-    #Prepare Results to Email Recipient
+    # Prepare Results to Email Recipient
     print('Preparing Email')
     todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
     #message = EmailMessage()
@@ -61,22 +74,16 @@ def email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD):
     except:
         print('Error: Unable to Send Report')
 
-# print('Reading Configuration File')
-with open('config.yml', 'r') as ymlfile:
-    config = yaml.load(ymlfile)
-# print('Reading Configuration File Complete')
-
-# SET UDS SERVER
-VAR_UDS_FQDN = config["uds"]["server"]  # VAR_UDS_FQDN = 'cucm2.ciscocollab.ninja'
+# Set Primary UDS Server
+VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]  # VAR_UDS_FQDN = 'cucm2.ciscocollab.ninja'
 
 # CREATE AXL INSTANCE
-axl1 = AxlToolkit(username=config["axl1"]["username"], password=config["axl1"]["password"], server_ip=config["axl1"]["server_ip"], tls_verify=False, version='12.0')
-axl2 = AxlToolkit(username=config["axl2"]["username"], password=config["axl2"]["password"], server_ip=config["axl2"]["server_ip"], tls_verify=False, version='12.0')
-axl3 = AxlToolkit(username=config["axl3"]["username"], password=config["axl3"]["password"], server_ip=config["axl3"]["server_ip"], tls_verify=False, version='12.0')
-axl4 = AxlToolkit(username=config["axl4"]["username"], password=config["axl4"]["password"], server_ip=config["axl4"]["server_ip"], tls_verify=False, version='12.0')
+axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=config["cucm"]["cluster1"]["password"], server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
+axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=config["cucm"]["cluster2"]["password"], server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False, version='12.0')
+axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=config["cucm"]["cluster3"]["password"], server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False, version='12.0')
+axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=config["cucm"]["cluster4"]["password"], server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
 
 ldapusers = {}
-
 for ldapuser in ldapuserlist:
     ldapusers[ldapuser] = {}
     ldapusers[ldapuser]['udsHomeCluster'] = uds(ldapuser)  # Query UDS for home cluster and store the value in the user dict
@@ -102,7 +109,7 @@ for ldapuser in ldapuserlist:
 
 noncompliant =[]
 compliant = []
-# PRINT USER DICTIONARIES AND CAPTURE COMPLIANCE
+# PRINT USER DICTIONARIES AND CAPTURE COMPLIANCE STATUS
 for u_id, u_info in ldapusers.items():
     # print("\nuserid:", u_id)
     for key in u_info:
@@ -113,6 +120,8 @@ for u_id, u_info in ldapusers.items():
                 # print(u_id, "is enabled for IM&P")
 
 # DISPLAY COMPLIANCE
+print("There are %s members in the %s distribution list" % (numberofldapusers, VAR_LDAP_GROUP))
+print("...")
 print("The following users are non-compliant:")
 for user in noncompliant:
     print(user)
@@ -120,9 +129,8 @@ print("...")
 print("The following users are compliant:")
 for user in compliant:
     print(user)
-
-
-print('...')
+print("...")
 print("Done.")
 
-#email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD)
+# SEND RESULTS VIA EMAIL
+email(VAR_MAIL_SERVER,VAR_MAIL_PORT,VAR_MAIL_AUTH,VAR_MAIL_PASSWORD)
