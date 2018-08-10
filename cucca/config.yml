@@ -10,9 +10,9 @@ ldap:
 mail:
   server: smtp.office365.com
   port: 587
-  auth_required: True
-  auth: cclouse@ciscocollab.ninja
-  password:
+  auth_required: False
+  auth_username: cclouse@ciscocollab.ninja
+  auth_password:
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja
 uds:
