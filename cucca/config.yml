@@ -1,32 +1,35 @@
+debug:
+  level: debug
 ldap:
   server: dc01.ciscocollab.ninja
   port: 636
   ssl: True
   username: svc-ldap@ciscocollab.ninja
-  password: Ciscocollab41!
+  password: somepass
   searchbase: DC=ciscocollab,DC=ninja
   querygroup: (&(memberof=CN=Compliance Users,CN=Users,DC=ciscocollab,DC=ninja))
   attribute: sAMAccountName
 mail:
   server: smtp.office365.com
-  port: 587
-  auth_required: False
+  auth_required: True
   auth_username: cclouse@ciscocollab.ninja
-  auth_password:
+  auth_password: somepass
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja
 uds:
-  server:
+  server: ciscocucmpub.ciscocollab.ninja
 cucm:
   primary_uds_server: cucm2.ciscocollab.ninja
   cluster1:
     username: axl-cer
     password: ccievoice
     server_ip: 192.168.10.200
+    server_fqdn: ciscocucmpub.ciscocollab.ninja
   cluster2:
     username: axlapi
     password: ccievoice
     server_ip: 192.168.10.220
+    server_fqdn: cucm2.ciscocollab.ninja
   cluster3:
     username:
     password:
