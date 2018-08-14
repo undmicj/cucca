@@ -12,6 +12,8 @@ import ast
 import os
 import re
 import mimetypes
+import logging
+import glob
 from email import encoders
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
@@ -19,8 +21,21 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+# Initialize Logging
+log_filename = 'cucca.log'
+logger = logging.getLogger('cucca-logging')
+logger.setLevel(logging.DEBUG)
+handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000, backupCount=5)
+formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
+                                    datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter('%(asctime)s  %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logfiles = glob.glob('%s*' % log_filename)
+
 # INITIALIZE CONFIG FILE AND READ IN VARIABLES
-print("Reading Configuration File")
+logger.info('Starting CDW Unified Communications Compliance Auditor')
+logger.info('Reading Configuration File')
 with open("config.yml", "r") as ymlfile:
     config = yaml.load(ymlfile)
 
@@ -40,7 +55,6 @@ VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
 VAR_MAIL_SENDER = config["mail"]["sender"]
 VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
 VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
-print("Reading Configuration File Complete")
 
 
 class Email:
@@ -68,7 +82,6 @@ class Email:
             raise Exception("Error! Must specify at least one body type (HTML or Text)")
         if len(self._to) == 0:
             raise Exception("Must specify at least one recipient")
-
         # Create the message part
         if self._textBody is not None and self._htmlBody is None:
             msg = MIMEText(self._textBody, "plain")
@@ -177,7 +190,6 @@ class Email:
         self._attach = []
 
     def addAttachment(self, fname, attachname=None):
-
         # Add a file attachment to this email message.
         # @param fname: The full path and file name of the file to attach.
         # @type fname: String
@@ -200,20 +212,21 @@ class Email:
 def ldaplookup():
 
     # Connect to LDAP Services & Pull Data
-    print("Capturing Group Membership")
+    logger.info('Capturing Group Membership')
     server = Server(VAR_LDAP_SERVER, port=VAR_LDAP_PORT, use_ssl=VAR_LDAP_SSL, get_info=None)
     ldapbind = Connection(server, user=VAR_LDAP_USERNAME, password=VAR_LDAP_PASSWORD, auto_bind=True)
-    ldapbind.search(search_base=VAR_LDAP_SEARCH_BASE, search_filter=VAR_LDAP_GROUP, attributes=VAR_LDAP_ATTRIBUTE, search_scope=SUBTREE, size_limit=0)
+    ldapbind.search(search_base=VAR_LDAP_SEARCH_BASE, search_filter=VAR_LDAP_GROUP, attributes=VAR_LDAP_ATTRIBUTE,
+                    search_scope=SUBTREE, size_limit=0)
     # Parsing LDAP Data
-    print("Parsing Group Membership")
-    result = ast.literal_eval(ldapbind.response_to_json())
+    logger.info('Parsing Group Membership')
+    ldapresult = ast.literal_eval(ldapbind.response_to_json())
     ldapuser = []
-    if result['entries'] is not None:
-        for entry in result['entries']:  # user is a list of dictionaries, containing user info
+    if ldapresult['entries'] is not None:
+        for entry in ldapresult['entries']:  # user is a list of dictionaries, containing user info
             ldapuser.append(entry['attributes']['sAMAccountName'])
     ldapuserlist = [''.join(x) for x in ldapuser]  # This converts user(list of lists) to just a list of users
-    print("Parsing Group Membership Completed")
     return ldapuserlist
+
 
 def udslookup(username):
 
@@ -233,11 +246,16 @@ def udslookup(username):
         userHomeCluster = item.text
     return userHomeCluster
 
+
 # CREATE AXL INSTANCES
-axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=config["cucm"]["cluster1"]["password"], server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
-axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=config["cucm"]["cluster2"]["password"], server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False, version='12.0')
-axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=config["cucm"]["cluster3"]["password"], server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False, version='12.0')
-axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=config["cucm"]["cluster4"]["password"], server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
+axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=config["cucm"]["cluster1"]["password"],
+                  server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
+axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=config["cucm"]["cluster2"]["password"],
+                  server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False, version='12.0')
+axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=config["cucm"]["cluster3"]["password"],
+                  server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False, version='12.0')
+axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=config["cucm"]["cluster4"]["password"],
+                  server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
 
 # EXECUTE LDAP LOOKUP, UDS LOOKUP, AXL LOOKUP
 ldapuserlist = ldaplookup()
@@ -245,17 +263,17 @@ ldapusers = {}
 for ldapuser in ldapuserlist:
     ldapusers[ldapuser] = {}
     ldapusers[ldapuser]['udsHomeCluster'] = udslookup(ldapuser)  # Query UDS for home cluster, store value in user dict
-    # print("UDS URL SAYS HOME CLUSTER IS", ldapusers[ldapuser]['udsHomeCluster'], "FOR", ldapuser)
+    #logging.DEBUG("UDS URL says Home Cluster is {0} for {1}").format(ldapusers[ldapuser]['udsHomeCluster'],[ldapuser])
     if ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster1"]["server_fqdn"]:
         result = axl1.list_users(userid=ldapuser)
     elif ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster2"]["server_fqdn"]:
         result = axl2.list_users(userid=ldapuser)
-    elif ldapusers[ldapuser]['udsHomeCluster'] == "cucm3.ciscocollab.ninja":
+    elif ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster3"]["server_fqdn"]:
         result = axl3.list_users(userid=ldapuser)
-    elif ldapusers[ldapuser]['udsHomeCluster'] == "cucm4.ciscocollab.ninja":
+    elif ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster4"]["server_fqdn"]:
         result = axl4.list_users(userid=ldapuser)
     else:
-        # print("No AXL details for homecluster:", ldapusers[ldapuser]['udsHomeCluster'])
+        # print("No AXL details for homecluster:", ldapusers[ldapuser]['udsHomeCluster']")
         result = axl1.list_users(userid=ldapuser)
     if result['return'] is not None:
         for user in result['return']['user']:  # user is a list of dictionaries, containing user info
@@ -270,7 +288,8 @@ for ldapuser in ldapuserlist:
                 ldapusers[user['userid']]['complianceStatus'] = "Compliant"
             ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
 
-# PRINT USER DICTIONARIES AND CAPTURE COMPLIANCE STATUS
+# Print User Dictionaries and Capture Compliance Statistics
+logging.INFO('Capturing Compliance Statistics')
 noncompliant = []
 compliant = []
 for u_id, u_info in ldapusers.items():
@@ -285,23 +304,29 @@ for u_id, u_info in ldapusers.items():
                 compliant.append(u_id)
                 # print(u_id, "is not enabled for IM&P")
 
-# DISPLAY COMPLIANCE
-# print("The following users are non-compliant:")
-# for user in noncompliant:
-#    print(user)
-# print("The following users are compliant:")
-# for user in compliant:
-#    print(user)
-
 # COMPILE HTML EMAIL
+logging.INFO('Compiling Email')
 todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
 html = "<html><head><style>body { font-family: sans-serif; font-size: 12.7px; }"
 html += "table { font-family: sans-serif; font-size: 12px; min-width: 50px}</style></head><body>"
-html += "<p>There are {0} associates in the {1} </p>".format(len(ldapuserlist), VAR_LDAP_GROUP)
-html += "<p>There are {0} compliant associates in the {1} </p>".format(len(compliant), VAR_LDAP_GROUP)
-html += "<p>There are {0} non-compliant associates in the {1} </p>".format(len(noncompliant), VAR_LDAP_GROUP)
-html += "<p>The following section shows users and compliance status.</p>"
+html += """<div><table border="1" style="border-collapse: collapse" cellpadding="5"<tbody><tr>"""
+html += """<th style="text-align: center; background: rgb(204,0,0); color: white; font-size: 14px" colspan="4">"""
+html += """Jabber User and Compliance Summary</th></tr><tr>"""
+html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Active Directory Group"""
+html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Total Users</b></th>"""
+html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Compliant</b></th>"""
+html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Non-Compliant</b></th>"""
+html += "<tr>"
+html += "<td>{0}</td>".format(VAR_LDAP_GROUP)
+html += "<td>{0}</td>".format(len(ldapuserlist))
+html += "<td>{0}</td>".format(len(compliant))
+html += "<td>{0}</td>".format(len(noncompliant))
+html += "</tr>"
+html += "</tbody></table></div><br/><br/>"
+
 html += """<div><table border="1" style="border-collapse: collapse" cellpadding="5"><tbody><tr>"""
+html += """<th style="text-align: center; background: rgb(204,0,0); color: white; font-size: 14px" colspan="7">"""
+html += """Jabber User and Compliance Report</th></tr><tr>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Initials</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>First Name</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Last Name</b></th>"""
@@ -313,21 +338,23 @@ html += "</tr>"
 
 for ldapuser in ldapusers:
     html += "<tr>"
-    html += "<td>{}</td>".format(ldapuser)
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['firstName'])
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['lastName'])
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['udsHomeCluster'])
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['imAndPresenceEnable'])
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['serviceProfile']['_value_1'])
-    html += "<td>{}</td>".format(ldapusers[ldapuser]['complianceStatus'])
+    html += "<td>{0}</td>".format(ldapuser)
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['firstName'])
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['lastName'])
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['udsHomeCluster'])
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['imAndPresenceEnable'])
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['serviceProfile']['_value_1'])
+    html += "<td>{0}</td>".format(ldapusers[ldapuser]['complianceStatus'])
     html += "</tr>"
 
 html += "</tbody></table></div></body></html>"
 
 # SEND HTML RESULTS VIA EMAIL
+logging.INFO('Sending Report')
 message = Email(VAR_MAIL_SERVER)
 message.setFrom(VAR_MAIL_SENDER)
 message.setSubject("CDW Unified Communications Compliance Audit for " + todaysDate)
-message.addRecipient(VAR_MAIL_RECIPIENT)
+for recipient in VAR_MAIL_RECIPIENT.split(","):
+    message.addRecipient(recipient)
 message.setHtmlBody(html)
 message.send()

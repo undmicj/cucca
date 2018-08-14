@@ -51,12 +51,11 @@ class AxlToolkit:
     history = HistoryPlugin()
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
-    def __init__(self, username, password, server_ip, version='12.0', tls_verify=True, timeout=10, logging_enabled=False):
+    def __init__(self, username, password, server_ip, version='12.0', tls_verify=True, timeout=10,
+                 logging_enabled=False):
         self.session = Session()
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.verify = tls_verify
@@ -330,10 +329,8 @@ class AxlToolkit:
         pass
         # TODO: Need to add this code
 
-    '''
-    
+    ''' 
     Lines
-    
     '''
 
     def get_line(self, dn, partition):
@@ -364,9 +361,7 @@ class AxlToolkit:
         return result
 
     '''
-
     LDAP Filter 
-
     '''
 
     def get_ldap_filter(self, name):
@@ -403,10 +398,8 @@ class AxlToolkit:
         return result
 
 
-    '''
-    
-    LDAP Directory
-    
+    '''  
+    LDAP Directory   
     '''
 
     def get_ldap_directory(self, name):
@@ -451,10 +444,8 @@ class AxlToolkit:
 
         return result
 
-    ''' 
-    
+    '''    
     LDAP System
-    
     '''
 
     def get_ldap_system(self):
@@ -478,11 +469,8 @@ class AxlToolkit:
 
         return result
 
-
-    ''' 
-    
+    '''
     LDAP Authentication
-    
     '''
 
     def get_ldap_authentication(self):
@@ -565,11 +553,8 @@ class AxlToolkit:
 
         return result
 
-
-    '''
-    
+    '''   
     Partitions
-    
     '''
 
     def add_partition(self, name, description):
@@ -961,11 +946,8 @@ class AxlToolkit:
         # TODO: Need to implement
         pass
 
-
     '''
-
     Conference Bridge
-
     '''
 
     def add_cfb(self, cfb_data):
@@ -1195,14 +1177,9 @@ class AxlToolkit:
 
         return result
 
-
-
-    ''' 
-    
-    SIP Profile
-    
+    '''     
+    SIP Profile    
     '''
-
 
     def get_sip_profile(self, name):
 
@@ -1321,13 +1298,11 @@ class AxlToolkit:
 
         return result
 
-
     '''
     
     Service Parameters
     
     '''
-
     def sql_update_service_parameter(self, name, value):
 
         query = "update processconfig set paramvalue = '{0}' where paramname = '{1}'".format(value, name)
@@ -1354,11 +1329,8 @@ class AxlToolkit:
 
         return result
 
-
     '''
-    
-    Device Association
-    
+        Device Association  
     '''
 
     def sql_associate_device_to_user(self, device, userid, association_type='1'):
@@ -1380,11 +1352,8 @@ class AxlToolkit:
 
             return result
 
-
-    '''
-    
-    Remote Destinations
-    
+    '''  
+    Remote Destinations   
     '''
 
     def get_remote_destination(self, destination):
@@ -1396,7 +1365,6 @@ class AxlToolkit:
 
         return result
 
-
     def check_connectivity(self):
         pass
 
@@ -1405,9 +1373,7 @@ class UcmServiceabilityToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, tls_verify=True):
@@ -1433,9 +1399,7 @@ class UcmRisPortToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, tls_verify=True):
@@ -1462,25 +1426,18 @@ class UcmPerfMonToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, tls_verify=True):
         wsdl = 'https://{0}:8443/perfmonservice2/services/PerfmonService?wsdl'.format(server_ip)
-
         self.session = Session()
         self.session.auth = HTTPBasicAuth(username, password)
         self.session.verify = tls_verify
-
         self.cache = SqliteCache(path='/tmp/sqlite_risport.db', timeout=60)
-
         self.client = Client(wsdl=wsdl, transport=Transport(cache=self.cache, session=self.session))
-
         self.service = self.client.create_service("{http://schemas.cisco.com/ast/soap}PerfmonBinding",
                                                   "https://{0}:8443/perfmonservice2/services/PerfmonService".format(server_ip))
-
         # enable_logging()
 
     def get_service(self):
@@ -1530,7 +1487,6 @@ class UcmPerfMonToolkit:
         return result
 
     def perfmonCollectSessionData(self, session_handle):
-
         return self.service.perfmonCollectSessionData(SessionHandle=session_handle)
 
 
@@ -1539,9 +1495,7 @@ class UcmLogCollectionToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, tls_verify=True):
@@ -1568,9 +1522,7 @@ class UcmDimeGetFileToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, tls_verify=True):
@@ -1597,9 +1549,7 @@ class PawsToolkit:
     last_exception = None
 
     '''
-
     Constructor - Create new instance 
-
     '''
 
     def __init__(self, username, password, server_ip, service, tls_verify=True):
@@ -1634,5 +1584,3 @@ class PawsToolkit:
         hw_info = self.service.getHardwareInformation()
 
         return hw_info
-
-

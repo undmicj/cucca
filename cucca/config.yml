@@ -1,5 +1,5 @@
 debug:
-  level: debug
+  level: INFO
 ldap:
   server: dc01.ciscocollab.ninja
   port: 636
@@ -10,14 +10,12 @@ ldap:
   querygroup: (&(memberof=CN=Compliance Users,CN=Users,DC=ciscocollab,DC=ninja))
   attribute: sAMAccountName
 mail:
-  server: smtp.office365.com
+  server: outlook.office365.com
   auth_required: True
   auth_username: cclouse@ciscocollab.ninja
   auth_password: somepass
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja
-uds:
-  server: ciscocucmpub.ciscocollab.ninja
 cucm:
   primary_uds_server: cucm2.ciscocollab.ninja
   cluster1:
@@ -34,7 +32,9 @@ cucm:
     username:
     password:
     server_ip:
+    server_fqdn:
   cluster4:
     username:
     password:
     server_ip:
+    server_fqdn:
