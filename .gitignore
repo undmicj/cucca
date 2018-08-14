@@ -3,3 +3,4 @@
 *.txt
 *.tsv
 .idea/
+*.yml

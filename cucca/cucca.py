@@ -21,21 +21,8 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# Initialize Logging
-log_filename = 'cucca.log'
-logger = logging.getLogger('cucca-logging')
-logger.setLevel(logging.DEBUG)
-handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000, backupCount=5)
-formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
-                                    datefmt='%Y-%m-%d %H:%M:%S')
-formatter = logging.Formatter('%(asctime)s  %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logfiles = glob.glob('%s*' % log_filename)
 
 # INITIALIZE CONFIG FILE AND READ IN VARIABLES
-logger.info('Starting CDW Unified Communications Compliance Auditor')
-logger.info('Reading Configuration File')
 with open("config.yml", "r") as ymlfile:
     config = yaml.load(ymlfile)
 
@@ -55,6 +42,19 @@ VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
 VAR_MAIL_SENDER = config["mail"]["sender"]
 VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
 VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
+
+# Initialize Logging
+log_filename = 'cucca.log'
+logger = logging.getLogger('cucca-logging')
+logger.setLevel(logging.INFO)
+handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000, backupCount=5)
+formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
+                                    datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logfiles = glob.glob('%s*' % log_filename)
+logger.info('Starting CDW Unified Communications Compliance Auditor')
 
 
 class Email:
@@ -210,8 +210,6 @@ class Email:
 
 
 def ldaplookup():
-
-    # Connect to LDAP Services & Pull Data
     logger.info('Capturing Group Membership')
     server = Server(VAR_LDAP_SERVER, port=VAR_LDAP_PORT, use_ssl=VAR_LDAP_SSL, get_info=None)
     ldapbind = Connection(server, user=VAR_LDAP_USERNAME, password=VAR_LDAP_PASSWORD, auto_bind=True)
@@ -263,7 +261,7 @@ ldapusers = {}
 for ldapuser in ldapuserlist:
     ldapusers[ldapuser] = {}
     ldapusers[ldapuser]['udsHomeCluster'] = udslookup(ldapuser)  # Query UDS for home cluster, store value in user dict
-    #logging.DEBUG("UDS URL says Home Cluster is {0} for {1}").format(ldapusers[ldapuser]['udsHomeCluster'],[ldapuser])
+    # logging.DEBUG("UDS URL says Home Cluster is {0} for {1}").format(ldapusers[ldapuser]['udsHomeCluster'],[ldapuser])
     if ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster1"]["server_fqdn"]:
         result = axl1.list_users(userid=ldapuser)
     elif ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster2"]["server_fqdn"]:
@@ -289,7 +287,7 @@ for ldapuser in ldapuserlist:
             ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
 
 # Print User Dictionaries and Capture Compliance Statistics
-logging.INFO('Capturing Compliance Statistics')
+logging.info('Capturing Compliance Statistics')
 noncompliant = []
 compliant = []
 for u_id, u_info in ldapusers.items():
@@ -305,7 +303,7 @@ for u_id, u_info in ldapusers.items():
                 # print(u_id, "is not enabled for IM&P")
 
 # COMPILE HTML EMAIL
-logging.INFO('Compiling Email')
+logging.info('Compiling Email')
 todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
 html = "<html><head><style>body { font-family: sans-serif; font-size: 12.7px; }"
 html += "table { font-family: sans-serif; font-size: 12px; min-width: 50px}</style></head><body>"
@@ -349,12 +347,16 @@ for ldapuser in ldapusers:
 
 html += "</tbody></table></div></body></html>"
 
-# SEND HTML RESULTS VIA EMAIL
-logging.INFO('Sending Report')
+# Create Excel Attachment of Report Data
+
+# Send HTML Results by Email
+logging.info('Sending Report')
 message = Email(VAR_MAIL_SERVER)
 message.setFrom(VAR_MAIL_SENDER)
 message.setSubject("CDW Unified Communications Compliance Audit for " + todaysDate)
 for recipient in VAR_MAIL_RECIPIENT.split(","):
     message.addRecipient(recipient)
+message.addAttachment()
 message.setHtmlBody(html)
 message.send()
+logging.info('Finished CDW Unified Communications Compliance Auditor')

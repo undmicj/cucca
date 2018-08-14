@@ -1,11 +1,11 @@
 debug:
-  level: INFO
+  level: logging.INFO
 ldap:
   server: dc01.ciscocollab.ninja
   port: 636
   ssl: True
   username: svc-ldap@ciscocollab.ninja
-  password: somepass
+  password: Ciscocollab41!
   searchbase: DC=ciscocollab,DC=ninja
   querygroup: (&(memberof=CN=Compliance Users,CN=Users,DC=ciscocollab,DC=ninja))
   attribute: sAMAccountName
@@ -13,7 +13,7 @@ mail:
   server: outlook.office365.com
   auth_required: True
   auth_username: cclouse@ciscocollab.ninja
-  auth_password: somepass
+  auth_password: Chainoflakes13!
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja
 cucm:
