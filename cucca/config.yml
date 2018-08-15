@@ -15,7 +15,7 @@ mail:
   auth_username: cclouse@ciscocollab.ninja
   auth_password: Chainoflakes13!
   sender: cclouse@ciscocollab.ninja
-  recipient: cclouse@ciscocollab.ninja
+  recipient: cclouse@ciscocollab.ninja,mikeund@cdw.com
 cucm:
   primary_uds_server: cucm2.ciscocollab.ninja
   cluster1:

@@ -284,7 +284,12 @@ for ldapuser in ldapuserlist:
                 ldapusers[user['userid']]['complianceStatus'] = "Non-Compliant"
             else:
                 ldapusers[user['userid']]['complianceStatus'] = "Compliant"
-            ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
+            if user['serviceProfile']['_value_1'] is not None:
+                ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
+            elif user['serviceProfile']['_value_1'] is None:
+                ldapusers[user['userid']]['serviceProfile'] = {'_value_1': "Use System Default"}
+            if user['homeCluster'] == "Not Provisioned":
+                ldapusers[user['userid']]['serviceProfile'] = {'_value_1': "N/A"}
 
 # Log User Dictionaries and Capture Compliance Statistics
 logger.info('Capturing Compliance Statistics')
@@ -352,6 +357,12 @@ workbookname = "{0} Compliance Report.xlsx".format(todaysDate)
 workbook = xlsxwriter.Workbook(workbookname)
 bold = workbook.add_format({'bold': True})
 worksheet = workbook.add_worksheet()
+# Add a format. Light red fill with dark red text.
+badformat = workbook.add_format({'bg_color': '#FFC7CE',
+                               'font_color': '#9C0006'})
+# Add a format. Green fill with dark green text.
+goodformat = workbook.add_format({'bg_color': '#C6EFCE',
+                               'font_color': '#006100'})
 worksheet.write('A1', 'UserID', bold)
 worksheet.write('B1', 'First Name', bold)
 worksheet.write('C1', 'Last Name', bold)
@@ -370,6 +381,8 @@ for ldapuser in (ldapusers):
     worksheet.write(row, col + 5, ldapusers[ldapuser]['serviceProfile']['_value_1'])
     worksheet.write(row, col + 6, ldapusers[ldapuser]['complianceStatus'])
     row += 1
+worksheet.conditional_format('G2:G9', {'type': 'cell', 'criteria': '==', 'value': '"Compliant"', 'format': goodformat})
+worksheet.conditional_format('G2:G9', {'type': 'cell', 'criteria': '==', 'value': '"Non-Compliant"', 'format': badformat})
 workbook.close()
 
 # Send HTML Results by Email
