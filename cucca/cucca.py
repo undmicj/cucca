@@ -22,6 +22,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
 class Email:
     # This class handles the creation and sending of email messages via SMTP.  This class also handles attachments and
     # can send HTML messages.  The code comes from various places around the net and from my own brain.
@@ -203,11 +204,11 @@ def udslookup(username):
     for child in root.iter('result'):
         if child.attrib['found'] == 'false':
             logger.debug("{0} not found in UDS!".format(username))
-            userHomeCluster = "Not Provisioned"
-            return userHomeCluster
+            userhomecluster = "Not Provisioned"
+            return userhomecluster
     for item in root.iter('homeCluster'):
-        userHomeCluster = item.text
-    return userHomeCluster
+        userhomecluster = item.text
+    return userhomecluster
 
 
 # Initialize Config File and Read in Variables
@@ -288,7 +289,7 @@ for ldapuser in ldapuserlist:
                 ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
             elif user['serviceProfile']['_value_1'] is None:
                 ldapusers[user['userid']]['serviceProfile'] = {'_value_1': "Use System Default"}
-            if user['homeCluster'] == "Not Provisioned":
+            if ldapusers[user['userid']]['udsHomeCluster'] == "Not Provisioned":
                 ldapusers[user['userid']]['serviceProfile'] = {'_value_1': "N/A"}
 
 # Log User Dictionaries and Capture Compliance Statistics
@@ -359,10 +360,10 @@ bold = workbook.add_format({'bold': True})
 worksheet = workbook.add_worksheet()
 # Add a format. Light red fill with dark red text.
 badformat = workbook.add_format({'bg_color': '#FFC7CE',
-                               'font_color': '#9C0006'})
+                                 'font_color': '#9C0006'})
 # Add a format. Green fill with dark green text.
 goodformat = workbook.add_format({'bg_color': '#C6EFCE',
-                               'font_color': '#006100'})
+                                  'font_color': '#006100'})
 worksheet.write('A1', 'UserID', bold)
 worksheet.write('B1', 'First Name', bold)
 worksheet.write('C1', 'Last Name', bold)
@@ -372,7 +373,7 @@ worksheet.write('F1', 'Service Profile', bold)
 worksheet.write('G1', 'Compliance Status', bold)
 row = 1
 col = 0
-for ldapuser in (ldapusers):
+for ldapuser in ldapusers:
     worksheet.write(row, col, ldapuser)
     worksheet.write(row, col + 1, ldapusers[ldapuser]['firstName'])
     worksheet.write(row, col + 2, ldapusers[ldapuser]['lastName'])
@@ -381,8 +382,10 @@ for ldapuser in (ldapusers):
     worksheet.write(row, col + 5, ldapusers[ldapuser]['serviceProfile']['_value_1'])
     worksheet.write(row, col + 6, ldapusers[ldapuser]['complianceStatus'])
     row += 1
-worksheet.conditional_format('G2:G9', {'type': 'cell', 'criteria': '==', 'value': '"Compliant"', 'format': goodformat})
-worksheet.conditional_format('G2:G9', {'type': 'cell', 'criteria': '==', 'value': '"Non-Compliant"', 'format': badformat})
+worksheet.set_column('A:G', 30)
+worksheet.autofilter('A1:G{0}'.format(row + 1))
+worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==', 'value': '"Compliant"', 'format': goodformat})
+worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==', 'value': '"Non-Compliant"', 'format': badformat})
 workbook.close()
 
 # Send HTML Results by Email
