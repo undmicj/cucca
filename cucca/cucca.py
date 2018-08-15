@@ -14,6 +14,7 @@ import re
 import mimetypes
 import logging
 import glob
+import xlsxwriter
 from email import encoders
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
@@ -22,7 +23,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-# INITIALIZE CONFIG FILE AND READ IN VARIABLES
+# Initialize Config File and Read in Variables
 with open("config.yml", "r") as ymlfile:
     config = yaml.load(ymlfile)
 
@@ -47,7 +48,7 @@ VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
 log_filename = 'cucca.log'
 logger = logging.getLogger('cucca-logging')
 logger.setLevel(logging.INFO)
-handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000, backupCount=5)
+handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000000, backupCount=5)
 formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
                                     datefmt='%Y-%m-%d %H:%M:%S')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -325,7 +326,7 @@ html += "</tbody></table></div><br/><br/>"
 html += """<div><table border="1" style="border-collapse: collapse" cellpadding="5"><tbody><tr>"""
 html += """<th style="text-align: center; background: rgb(204,0,0); color: white; font-size: 14px" colspan="7">"""
 html += """Jabber User and Compliance Report</th></tr><tr>"""
-html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Initials</b></th>"""
+html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>UserID</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>First Name</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Last Name</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Home Cluster</b></th>"""
@@ -348,6 +349,29 @@ for ldapuser in ldapusers:
 html += "</tbody></table></div></body></html>"
 
 # Create Excel Attachment of Report Data
+workbookname = "{0} Compliance Report.xlsx".format(todaysDate)
+workbook = xlsxwriter.Workbook(workbookname)
+bold = workbook.add_format({'bold': True})
+worksheet = workbook.add_worksheet()
+worksheet.write('A1', 'UserID', bold)
+worksheet.write('B1', 'First Name', bold)
+worksheet.write('C1', 'Last Name', bold)
+worksheet.write('D1', 'UDS Home Cluster', bold)
+worksheet.write('E1', 'IM & Presence Enabled', bold)
+worksheet.write('F1', 'Service Profile', bold)
+worksheet.write('G1', 'Compliance Status', bold)
+row = 1
+col = 0
+for ldapuser in (ldapusers):
+    worksheet.write(row, col, ldapuser)
+    worksheet.write(row, col + 1, ldapusers[ldapuser]['firstName'])
+    worksheet.write(row, col + 2, ldapusers[ldapuser]['lastName'])
+    worksheet.write(row, col + 3, ldapusers[ldapuser]['udsHomeCluster'])
+    worksheet.write(row, col + 4, ldapusers[ldapuser]['imAndPresenceEnable'])
+    worksheet.write(row, col + 5, ldapusers[ldapuser]['serviceProfile']['_value_1'])
+    worksheet.write(row, col + 6, ldapusers[ldapuser]['complianceStatus'])
+    row += 1
+workbook.close()
 
 # Send HTML Results by Email
 logging.info('Sending Report')
@@ -356,7 +380,19 @@ message.setFrom(VAR_MAIL_SENDER)
 message.setSubject("CDW Unified Communications Compliance Audit for " + todaysDate)
 for recipient in VAR_MAIL_RECIPIENT.split(","):
     message.addRecipient(recipient)
-message.addAttachment()
+message.addAttachment(workbookname)
 message.setHtmlBody(html)
 message.send()
 logging.info('Finished CDW Unified Communications Compliance Auditor')
+
+# Cleaning Up
+logging.info('Cleaning Up')
+try:
+    os.remove(workbookname)
+    os.remove("sqlite_{0}.db".format(config["cucm"]["cluster1"]["server_ip"]))
+    os.remove("sqlite_{0}.db".format(config["cucm"]["cluster2"]["server_ip"]))
+    os.remove("sqlite_{0}.db".format(config["cucm"]["cluster3"]["server_ip"]))
+    os.remove("sqlite_{0}.db".format(config["cucm"]["cluster4"]["server_ip"]))
+    os.remove("sqlite_None.db")
+except OSError:
+    pass
