@@ -246,7 +246,7 @@ logfiles = glob.glob('%s*' % log_filename)
 logger.info('Starting CDW Unified Communications Compliance Auditor')
 
 
-# CREATE AXL INSTANCES
+# Create AXL Instances
 axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=config["cucm"]["cluster1"]["password"],
                   server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
 axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=config["cucm"]["cluster2"]["password"],
@@ -256,7 +256,7 @@ axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=conf
 axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=config["cucm"]["cluster4"]["password"],
                   server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
 
-# EXECUTE LDAP LOOKUP, UDS LOOKUP, AXL LOOKUP
+# Execute LDAP Lookup, UDS Lookup, AXL Lookup
 ldapuserlist = ldaplookup()
 ldapusers = {}
 for ldapuser in ldapuserlist:
@@ -308,9 +308,12 @@ for u_id, u_info in ldapusers.items():
                 compliant.append(u_id)
                 logger.debug("{0}is not enabled for IM&P".format(u_id))
 
-# COMPILE HTML EMAIL
+# Compile HTML Email
 logger.info('Compiling Email')
 todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
+searchObj = re.search(r'.*memberOf=CN=(.*?),', VAR_LDAP_GROUP, re.M | re.I)
+if searchObj:
+    ldapgroup = searchObj.group(1)
 html = "<html><head><style>body { font-family: sans-serif; font-size: 12.7px; }"
 html += "table { font-family: sans-serif; font-size: 12px; min-width: 50px}</style></head><body>"
 html += """<div><table border="1" style="border-collapse: collapse" cellpadding="5"<tbody><tr>"""
@@ -321,7 +324,7 @@ html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Compliant</b></th>"""
 html += """<th style="text-align: left; background: rgb(204,0,0); color:white"><b>Non-Compliant</b></th>"""
 html += "<tr>"
-html += "<td>{0}</td>".format(VAR_LDAP_GROUP)
+html += "<td>{0}</td>".format(ldapgroup)
 html += "<td>{0}</td>".format(len(ldapuserlist))
 html += "<td>{0}</td>".format(len(compliant))
 html += "<td>{0}</td>".format(len(noncompliant))
@@ -354,16 +357,13 @@ for ldapuser in ldapusers:
 html += "</tbody></table></div></body></html>"
 
 # Create Excel Attachment of Report Data
+logger.info('Creating Excel Attachment')
 workbookname = "{0} Compliance Report.xlsx".format(todaysDate)
 workbook = xlsxwriter.Workbook(workbookname)
 bold = workbook.add_format({'bold': True})
 worksheet = workbook.add_worksheet()
-# Add a format. Light red fill with dark red text.
-badformat = workbook.add_format({'bg_color': '#FFC7CE',
-                                 'font_color': '#9C0006'})
-# Add a format. Green fill with dark green text.
-goodformat = workbook.add_format({'bg_color': '#C6EFCE',
-                                  'font_color': '#006100'})
+badformat = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})  #  Light red fill with dark red text
+goodformat = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'}) #  Green fill with dark green text
 worksheet.write('A1', 'UserID', bold)
 worksheet.write('B1', 'First Name', bold)
 worksheet.write('C1', 'Last Name', bold)
@@ -384,8 +384,10 @@ for ldapuser in ldapusers:
     row += 1
 worksheet.set_column('A:G', 30)
 worksheet.autofilter('A1:G{0}'.format(row + 1))
-worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==', 'value': '"Compliant"', 'format': goodformat})
-worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==', 'value': '"Non-Compliant"', 'format': badformat})
+worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==',
+                                                         'value': '"Compliant"', 'format': goodformat})
+worksheet.conditional_format('G2:G{0}'.format(row + 1), {'type': 'cell', 'criteria': '==',
+                                                         'value': '"Non-Compliant"', 'format': badformat})
 workbook.close()
 
 # Send HTML Results by Email
