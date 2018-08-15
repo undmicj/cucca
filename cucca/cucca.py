@@ -194,7 +194,7 @@ def ldaplookup():
 def udslookup(username):
 
     r = requests.get("https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username, verify=False)
-    # print("UDS URL", username, "is", "https://" + VAR_UDS_FQDN + ":8443/cucm-uds/clusterUser?username=" + username)
+    logger.debug("UDS URL for {0} is https://{1}:8443/cucm-uds/clusterUser?username={0}".format(username, VAR_UDS_FQDN))
     # print(r.status_code)
     # print(r.headers)
     # print(r.content)
@@ -202,7 +202,7 @@ def udslookup(username):
     root = ElementTree.fromstring(r.content)
     for child in root.iter('result'):
         if child.attrib['found'] == 'false':
-            # print(username, "not found in UDS!")
+            logger.debug("{0} not found in UDS!".format(username))
             userHomeCluster = "Not Provisioned"
             return userHomeCluster
     for item in root.iter('homeCluster'):
@@ -234,7 +234,7 @@ VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
 # Initialize Logging
 log_filename = 'cucca.log'
 logger = logging.getLogger('cucca-logging')
-logger.setLevel(logging.INFO)
+logger.setLevel(VAR_DEBUG)
 handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000000, backupCount=5)
 formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
                                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -271,7 +271,7 @@ for ldapuser in ldapuserlist:
     elif ldapusers[ldapuser]['udsHomeCluster'] == config["cucm"]["cluster4"]["server_fqdn"]:
         result = axl4.list_users(userid=ldapuser)
     else:
-        # print("No AXL details for homecluster:", ldapusers[ldapuser]['udsHomeCluster']")
+        logger.debug("No AXL details for homecluster: {0}".format(ldapusers[ldapuser]['udsHomeCluster']))
         result = axl1.list_users(userid=ldapuser)
     if result['return'] is not None:
         for user in result['return']['user']:  # user is a list of dictionaries, containing user info
@@ -286,24 +286,24 @@ for ldapuser in ldapuserlist:
                 ldapusers[user['userid']]['complianceStatus'] = "Compliant"
             ldapusers[user['userid']]['serviceProfile'] = user['serviceProfile']
 
-# Print User Dictionaries and Capture Compliance Statistics
-logging.info('Capturing Compliance Statistics')
+# Log User Dictionaries and Capture Compliance Statistics
+logger.info('Capturing Compliance Statistics')
 noncompliant = []
 compliant = []
 for u_id, u_info in ldapusers.items():
-    # print("\nuserid:", u_id)
+    logger.debug("userid:{0}".format(u_id))
     for key in u_info:
-        # print(key + ':', u_info[key])
+        logger.debug("{0}:{1}".format(key, u_info[key]))
         if key == 'imAndPresenceEnable':
             if u_info[key] == 'true':
                 noncompliant.append(u_id)
-                # print(u_id, "is enabled for IM&P")
+                logger.debug("{0} is enabled for IM&P".format(u_id))
             else:
                 compliant.append(u_id)
-                # print(u_id, "is not enabled for IM&P")
+                logger.debug("{0}is not enabled for IM&P".format(u_id))
 
 # COMPILE HTML EMAIL
-logging.info('Compiling Email')
+logger.info('Compiling Email')
 todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
 html = "<html><head><style>body { font-family: sans-serif; font-size: 12.7px; }"
 html += "table { font-family: sans-serif; font-size: 12px; min-width: 50px}</style></head><body>"
@@ -373,7 +373,7 @@ for ldapuser in (ldapusers):
 workbook.close()
 
 # Send HTML Results by Email
-logging.info('Sending Report')
+logger.info('Sending Report')
 message = Email(VAR_MAIL_SERVER)
 message.setFrom(VAR_MAIL_SENDER)
 message.setSubject("CDW Unified Communications Compliance Audit for " + todaysDate)
@@ -382,10 +382,10 @@ for recipient in VAR_MAIL_RECIPIENT.split(","):
 message.addAttachment(workbookname)
 message.setHtmlBody(html)
 message.send()
-logging.info('Finished CDW Unified Communications Compliance Auditor')
+logger.info('Finished CDW Unified Communications Compliance Auditor')
 
 # Cleaning Up
-logging.info('Cleaning Up')
+logger.info('Cleaning Up')
 try:
     os.remove(workbookname)
     os.remove("sqlite_{0}.db".format(config["cucm"]["cluster1"]["server_ip"]))

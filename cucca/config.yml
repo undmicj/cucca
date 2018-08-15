@@ -1,5 +1,5 @@
 debug:
-  level: logging.INFO
+  level: DEBUG
 ldap:
   server: dc01.ciscocollab.ninja
   port: 636
