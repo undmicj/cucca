@@ -22,42 +22,6 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
-# Initialize Config File and Read in Variables
-with open("config.yml", "r") as ymlfile:
-    config = yaml.load(ymlfile)
-
-VAR_DEBUG = config["debug"]["level"]
-VAR_LDAP_SERVER = config["ldap"]["server"]
-VAR_LDAP_PORT = config["ldap"]["port"]
-VAR_LDAP_SSL = config["ldap"]["ssl"]
-VAR_LDAP_USERNAME = config["ldap"]["username"]
-VAR_LDAP_PASSWORD = config["ldap"]["password"]
-VAR_LDAP_SEARCH_BASE = config["ldap"]["searchbase"]
-VAR_LDAP_GROUP = config["ldap"]["querygroup"]
-VAR_LDAP_ATTRIBUTE = config["ldap"]["attribute"]
-VAR_MAIL_SERVER = config["mail"]["server"]
-VAR_MAIL_AUTH_REQ = config["mail"]["auth_required"]
-VAR_MAIL_AUTH_USERNAME = config["mail"]["auth_username"]
-VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
-VAR_MAIL_SENDER = config["mail"]["sender"]
-VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
-VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
-
-# Initialize Logging
-log_filename = 'cucca.log'
-logger = logging.getLogger('cucca-logging')
-logger.setLevel(logging.INFO)
-handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000000, backupCount=5)
-formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
-                                    datefmt='%Y-%m-%d %H:%M:%S')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logfiles = glob.glob('%s*' % log_filename)
-logger.info('Starting CDW Unified Communications Compliance Auditor')
-
-
 class Email:
     # This class handles the creation and sending of email messages via SMTP.  This class also handles attachments and
     # can send HTML messages.  The code comes from various places around the net and from my own brain.
@@ -244,6 +208,41 @@ def udslookup(username):
     for item in root.iter('homeCluster'):
         userHomeCluster = item.text
     return userHomeCluster
+
+
+# Initialize Config File and Read in Variables
+with open("config.yml", "r") as ymlfile:
+    config = yaml.load(ymlfile)
+
+VAR_DEBUG = config["debug"]["level"]
+VAR_LDAP_SERVER = config["ldap"]["server"]
+VAR_LDAP_PORT = config["ldap"]["port"]
+VAR_LDAP_SSL = config["ldap"]["ssl"]
+VAR_LDAP_USERNAME = config["ldap"]["username"]
+VAR_LDAP_PASSWORD = config["ldap"]["password"]
+VAR_LDAP_SEARCH_BASE = config["ldap"]["searchbase"]
+VAR_LDAP_GROUP = config["ldap"]["querygroup"]
+VAR_LDAP_ATTRIBUTE = config["ldap"]["attribute"]
+VAR_MAIL_SERVER = config["mail"]["server"]
+VAR_MAIL_AUTH_REQ = config["mail"]["auth_required"]
+VAR_MAIL_AUTH_USERNAME = config["mail"]["auth_username"]
+VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
+VAR_MAIL_SENDER = config["mail"]["sender"]
+VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
+VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
+
+# Initialize Logging
+log_filename = 'cucca.log'
+logger = logging.getLogger('cucca-logging')
+logger.setLevel(logging.INFO)
+handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=2000000, backupCount=5)
+formatter_debug = logging.Formatter('%(asctime)s [%(levelname)8s](%(funcName)s:%(lineno)d): %(message)s',
+                                    datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logfiles = glob.glob('%s*' % log_filename)
+logger.info('Starting CDW Unified Communications Compliance Auditor')
 
 
 # CREATE AXL INSTANCES
