@@ -3,38 +3,38 @@ debug:
 ldap:
   server: dc01.ciscocollab.ninja
   port: 636
-  ssl: True
+  ssl: true
   username: svc-ldap@ciscocollab.ninja
-  password: Ciscocollab41!
+  password: b'fNdqMGjepzAZl8luU+/I1w=='
   searchbase: DC=ciscocollab,DC=ninja
   querygroup: (&(memberof=CN=Compliance Users,CN=Users,DC=ciscocollab,DC=ninja))
   attribute: sAMAccountName
 mail:
   server: outlook.office365.com
-  auth_required: True
+  auth_required: true
   auth_username: cclouse@ciscocollab.ninja
-  auth_password: Chainoflakes13!
+  auth_password: b'r3IjfJYWt8UR1O2jvTbTxQ=='
   sender: cclouse@ciscocollab.ninja
   recipient: cclouse@ciscocollab.ninja,mikeund@cdw.com
 cucm:
   primary_uds_server: cucm2.ciscocollab.ninja
   cluster1:
     username: axl-cer
-    password: ccievoice
+    password: b'2Ggf74g8dmugOTU2QK2o+w=='
     server_ip: 192.168.10.200
     server_fqdn: ciscocucmpub.ciscocollab.ninja
   cluster2:
     username: axlapi
-    password: ccievoice
+    password: b'2Ggf74g8dmugOTU2QK2o+w=='
     server_ip: 192.168.10.220
     server_fqdn: cucm2.ciscocollab.ninja
   cluster3:
-    username:
-    password:
-    server_ip:
-    server_fqdn:
+    username: administrator
+    password: b'2Ggf74g8dmugOTU2QK2o+w=='
+    server_ip: 192.168.10.224
+    server_fqdn: cucm3.ciscocollab.ninja
   cluster4:
     username:
-    password:
+    password: b'H6Rz2ub2EzYgoB+gplmkSA=='
     server_ip:
     server_fqdn:

@@ -21,7 +21,10 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+from Crypto.Cipher import AES
+import base64
+import ruamel.yaml
+import getpass
 
 class Email:
     # This class handles the creation and sending of email messages via SMTP.  This class also handles attachments and
@@ -231,6 +234,24 @@ VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
 VAR_MAIL_SENDER = config["mail"]["sender"]
 VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
 VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
+VAR_AXL1_PASSWORD = config["cucm"]["cluster1"]["password"]
+VAR_AXL2_PASSWORD = config["cucm"]["cluster2"]["password"]
+VAR_AXL3_PASSWORD = config["cucm"]["cluster3"]["password"]
+VAR_AXL4_PASSWORD = config["cucm"]["cluster4"]["password"]
+VAR_CRED_VARIABLES = {
+    "VAR_LDAP_PASSWORD": VAR_LDAP_PASSWORD,
+    "VAR_MAIL_AUTH_PASSWORD": VAR_MAIL_AUTH_PASSWORD,
+    "VAR_AXL1_PASSWORD": VAR_AXL1_PASSWORD,
+    "VAR_AXL2_PASSWORD": VAR_AXL2_PASSWORD,
+    "VAR_AXL3_PASSWORD": VAR_AXL3_PASSWORD,
+    "VAR_AXL4_PASSWORD": VAR_AXL4_PASSWORD
+}
+# ENCRYPTION VARIABLES
+PADDING = '#'
+pad_it = lambda s: bytes(s+(16 - len(s)%16)*PADDING, encoding='utf8')
+key = b'1234567812345678'
+iv = b'1234567812345678'
+
 
 # Initialize Logging
 log_filename = 'cucca.log'
@@ -246,14 +267,153 @@ logfiles = glob.glob('%s*' % log_filename)
 logger.info('Starting CDW Unified Communications Compliance Auditor')
 
 
+# --------- START ENCRYPTION --------- #
+def encrypt_data(plaintext):
+    source = plaintext
+    generator = AES.new(key, AES.MODE_CBC, iv)
+    crypt = generator.encrypt(pad_it(source))
+    # print("The encrypted bytes are:")
+    # print(crypt)
+    # print()
+    cryptedStr = base64.b64encode(crypt)
+    # print("The Base64 bytes are")
+    # print(type(cryptedStr))
+    # print(cryptedStr)
+    # print()
+    return(cryptedStr)
+
+# --------- START DECRYPTION --------- #
+def decrypt_data(cryptedStr):
+    #DECODE BASE64
+    # print("Base64 is:", cryptedStr)
+    # print(type(cryptedStr))
+    # print()
+    decryptStr = base64.b64decode(cryptedStr)
+    # print("Decoded Base64 is:", decryptStr)
+    # print(type(decryptStr))
+    # print()
+
+    #DECRYPT
+    generator2 = AES.new(key, AES.MODE_CBC, iv)
+    decrypt = generator2.decrypt(decryptStr)
+    # print("Decrypted data is")
+    # print(decrypt)
+    # print(type(decrypt))
+    # print()
+
+    # DECODE AND REMOVE PADDING
+    decryptedstring = decrypt.decode('ASCII')
+    final = decryptedstring.rstrip(PADDING)
+    # print("The Password is:", final)
+    return final
+
+
+
+# --------- READ CONFIG AND GATHER PASSWORDS IF NEEDED --------- #
+with open("config.yml", 'r') as readconf:
+    config = ruamel.yaml.load(readconf, ruamel.yaml.RoundTripLoader)
+
+# CHECK FOR MISSING CREDS AND IF MISSING GATHER AND ENCRYPT
+for entry in VAR_CRED_VARIABLES:
+    password = VAR_CRED_VARIABLES[entry]
+    if not password:
+        ptpassword = getpass.getpass(prompt="Enter the password for the {0} Account:".format(entry))
+        passwordencrypt = encrypt_data(ptpassword)
+        if entry == "VAR_LDAP_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config['ldap']['password'] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+        elif entry == "VAR_MAIL_AUTH_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config["mail"]["auth_password"] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+        elif entry == "VAR_AXL1_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config["cucm"]["cluster1"]["password"] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+        elif entry == "VAR_AXL2_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config["cucm"]["cluster2"]["password"] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+        elif entry == "VAR_AXL3_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config["cucm"]["cluster3"]["password"] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+        elif entry == "VAR_AXL4_PASSWORD":
+            passwordencrypt = encrypt_data(ptpassword)
+            config["cucm"]["cluster4"]["password"] = str(passwordencrypt)
+            # print(type(passwordencrypt))
+            print("Encrypted password is", passwordencrypt)
+# THIS ELSE SHOULD NOT BE NEEDED BUT IS GOOD FOR DEBUGGING
+    else:
+        print("Encrypted password found in config file:", password)
+        foundencpassword = ast.literal_eval(password)
+        print(type(foundencpassword))
+        passworddecrypt = decrypt_data(foundencpassword)
+        print("The password in the config file is:",passworddecrypt)
+
+# ONCE PASSWORD(S) ARE FOUND WRITE ENCRYPTED FORM TO CONFIG FILE
+with open('config.yml', 'w') as updatedconfig:
+    ruamel.yaml.dump(config, updatedconfig, ruamel.yaml.RoundTripDumper)
+
+
+# READ CONFIG FILE AGAIN(THIS TIME WILL HAVE ALL CREDS POPULATED
+with open("config.yml", 'r') as readconf2:  # IS THE 2 NEEDED HERE OR CAN WE USE READCONF2 AGAIN
+    config = ruamel.yaml.load(readconf2, ruamel.yaml.RoundTripLoader)
+# READ IN CRED VARIABLES AGAIN (THEY WILL BE ENCRYPTED)
+VAR_LDAP_PASSWORD = config["ldap"]["password"]
+VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
+VAR_AXL1_PASSWORD = config["cucm"]["cluster1"]["password"]
+VAR_AXL2_PASSWORD = config["cucm"]["cluster2"]["password"]
+VAR_AXL3_PASSWORD = config["cucm"]["cluster3"]["password"]
+VAR_AXL4_PASSWORD = config["cucm"]["cluster4"]["password"]
+# MIGHT HAVE TO UPDATE CRED DICTIONARY AGAIN
+VAR_CRED_VARIABLES = {
+    "VAR_LDAP_PASSWORD": VAR_LDAP_PASSWORD,
+    "VAR_MAIL_AUTH_PASSWORD": VAR_MAIL_AUTH_PASSWORD,
+    "VAR_AXL1_PASSWORD": VAR_AXL1_PASSWORD,
+    "VAR_AXL2_PASSWORD": VAR_AXL2_PASSWORD,
+    "VAR_AXL3_PASSWORD": VAR_AXL3_PASSWORD,
+    "VAR_AXL4_PASSWORD": VAR_AXL4_PASSWORD
+}
+
+# ITERATE CREDS AND DECRYPT
+for entry in VAR_CRED_VARIABLES:
+    password = VAR_CRED_VARIABLES[entry]
+    print("Attempting to read credentials for {0}".format(entry))
+    if not password:
+        print("Error, missing credentials for {0}".format(entry))
+        # WRITE ENCRYPTED PASSWORD TO CONFIG FILE <-- MOVED OUTSIDE OF FOR LOOP
+    else:
+        print("Encrypted password found in final config file:", password)
+        foundencpassword = ast.literal_eval(password)
+        # print(type(foundencpassword))
+        passworddecrypt = decrypt_data(foundencpassword)
+        print("The password in the final config file is:", passworddecrypt)
+        VAR_CRED_VARIABLES[entry] = passworddecrypt
+
+# UPDATE VARIABLES FROM DICTONARY FOR USE
+VAR_LDAP_PASSWORD = VAR_CRED_VARIABLES["VAR_LDAP_PASSWORD"]
+VAR_MAIL_AUTH_PASSWORD = VAR_CRED_VARIABLES["VAR_MAIL_AUTH_PASSWORD"]
+VAR_AXL1_PASSWORD = VAR_CRED_VARIABLES["VAR_AXL1_PASSWORD"]
+VAR_AXL2_PASSWORD = VAR_CRED_VARIABLES["VAR_AXL2_PASSWORD"]
+VAR_AXL3_PASSWORD = VAR_CRED_VARIABLES["VAR_AXL3_PASSWORD"]
+VAR_AXL4_PASSWORD = VAR_CRED_VARIABLES["VAR_AXL4_PASSWORD"]
+
+
 # Create AXL Instances
-axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=config["cucm"]["cluster1"]["password"],
+axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=VAR_AXL1_PASSWORD,
                   server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
-axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=config["cucm"]["cluster2"]["password"],
+axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=VAR_AXL2_PASSWORD,
                   server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False, version='12.0')
-axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=config["cucm"]["cluster3"]["password"],
+axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=VAR_AXL3_PASSWORD,
                   server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False, version='12.0')
-axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=config["cucm"]["cluster4"]["password"],
+axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=VAR_AXL4_PASSWORD,
                   server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
 
 # Execute LDAP Lookup, UDS Lookup, AXL Lookup
