@@ -394,7 +394,6 @@ for entry in VAR_CRED_VARIABLES:
         foundencpassword = ast.literal_eval(password)
         # print(type(foundencpassword))
         passworddecrypt = decrypt_data(foundencpassword)
-        logger.info("The password in the final config file is:{0}".format(passworddecrypt))
         VAR_CRED_VARIABLES[entry] = passworddecrypt
 
 # UPDATE VARIABLES FROM DICTONARY FOR USE
