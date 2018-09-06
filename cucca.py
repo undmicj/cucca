@@ -315,7 +315,7 @@ with open("config.yml", 'r') as readconf:
     config = ruamel.yaml.load(readconf, ruamel.yaml.RoundTripLoader)
 
 # CHECK FOR MISSING CREDS AND IF MISSING GATHER AND ENCRYPT
-logger.info("Validating Credentials Present")
+logger.info("Validating Credentials Are Present")
 for entry in VAR_CRED_VARIABLES:
     password = VAR_CRED_VARIABLES[entry]
     if not password:
@@ -361,12 +361,15 @@ for entry in VAR_CRED_VARIABLES:
 
 # ONCE PASSWORD(S) ARE FOUND WRITE ENCRYPTED FORM TO CONFIG FILE
 with open('config.yml', 'w') as updatedconfig:
+    logger.info("Enrypted Passwords Updated in Config File")
     ruamel.yaml.dump(config, updatedconfig, ruamel.yaml.RoundTripDumper)
 
 
 # READ CONFIG FILE AGAIN(THIS TIME WILL HAVE ALL CREDS POPULATED
 with open("config.yml", 'r') as readconf2:  # IS THE 2 NEEDED HERE OR CAN WE USE READCONF2 AGAIN
+    logger.info("Reading Config File Again with All Creds")
     config = ruamel.yaml.load(readconf2, ruamel.yaml.RoundTripLoader)
+
 # READ IN CRED VARIABLES AGAIN (THEY WILL BE ENCRYPTED)
 VAR_LDAP_PASSWORD = config["ldap"]["password"]
 VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
@@ -374,6 +377,7 @@ VAR_AXL1_PASSWORD = config["cucm"]["cluster1"]["password"]
 VAR_AXL2_PASSWORD = config["cucm"]["cluster2"]["password"]
 VAR_AXL3_PASSWORD = config["cucm"]["cluster3"]["password"]
 VAR_AXL4_PASSWORD = config["cucm"]["cluster4"]["password"]
+
 # MIGHT HAVE TO UPDATE CRED DICTIONARY AGAIN
 VAR_CRED_VARIABLES = {
     "VAR_LDAP_PASSWORD": VAR_LDAP_PASSWORD,
@@ -387,16 +391,16 @@ VAR_CRED_VARIABLES = {
 # ITERATE CREDS AND DECRYPT
 for entry in VAR_CRED_VARIABLES:
     password = VAR_CRED_VARIABLES[entry]
-    print("Attempting to read credentials for {0}".format(entry))
+    logger.info("Attempting to read credentials for {0}".format(entry))
     if not password:
-        print("Error, missing credentials for {0}".format(entry))
+        logger.error("Error, missing credentials for {0}".format(entry))
         # WRITE ENCRYPTED PASSWORD TO CONFIG FILE <-- MOVED OUTSIDE OF FOR LOOP
     else:
-        print("Encrypted password found in final config file:", password)
+        logger.info("Encrypted password found in final config file:{0}".format(password))
         foundencpassword = ast.literal_eval(password)
         # print(type(foundencpassword))
         passworddecrypt = decrypt_data(foundencpassword)
-        print("The password in the final config file is:", passworddecrypt)
+        logger.info("The password in the final config file is:{0}".format(passworddecrypt))
         VAR_CRED_VARIABLES[entry] = passworddecrypt
 
 # UPDATE VARIABLES FROM DICTONARY FOR USE
