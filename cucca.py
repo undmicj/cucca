@@ -42,7 +42,7 @@ class Email:
         self._smtpServer = smtpserver
         self._smtpPort = VAR_MAIL_PORT
         self._reEmail = re.compile(r"[^@]+@[^@]+")
-        self._debug = VAR_DEBUG
+        self._debug = VAR_MAIL_DEBUG
         self.clearRecipients()
         self.clearAttachments()
 
@@ -233,6 +233,8 @@ VAR_MAIL_AUTH_USERNAME = config["mail"]["auth_username"]
 VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
 VAR_MAIL_SENDER = config["mail"]["sender"]
 VAR_MAIL_RECIPIENT = config["mail"]["recipient"]
+VAR_MAIL_PORT = config["mail"]["port"]
+VAR_MAIL_DEBUG = config["mail"]["debug"]
 VAR_UDS_FQDN = config["cucm"]["primary_uds_server"]
 VAR_AXL1_PASSWORD = config["cucm"]["cluster1"]["password"]
 VAR_AXL2_PASSWORD = config["cucm"]["cluster2"]["password"]
