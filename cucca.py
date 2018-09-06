@@ -26,6 +26,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from Cryptodome.Cipher import AES
 
+
 class Email:
     # This class handles the creation and sending of email messages via SMTP.  This class also handles attachments and
     # can send HTML messages.  The code comes from various places around the net and from my own brain.
@@ -248,7 +249,7 @@ VAR_CRED_VARIABLES = {
 }
 # ENCRYPTION VARIABLES
 PADDING = '#'
-pad_it = lambda s: bytes(s+(16 - len(s)%16)*PADDING, encoding='utf8')
+pad_it = lambda s: bytes(s+(16 - len(s) % 16)*PADDING, encoding='utf8')
 key = b'1234567812345678'
 iv = b'1234567812345678'
 
@@ -275,27 +276,28 @@ def encrypt_data(plaintext):
     # print("The encrypted bytes are:")
     # print(crypt)
     # print()
-    cryptedStr = base64.b64encode(crypt)
+    cryptedstr = base64.b64encode(crypt)
     # print("The Base64 bytes are")
-    # print(type(cryptedStr))
-    # print(cryptedStr)
+    # print(type(cryptedstr))
+    # print(cryptedstr)
     # print()
-    return(cryptedStr)
+    return cryptedstr
+
 
 # --------- START DECRYPTION --------- #
-def decrypt_data(cryptedStr):
-    #DECODE BASE64
-    # print("Base64 is:", cryptedStr)
-    # print(type(cryptedStr))
+def decrypt_data(cryptedstr):
+    # DECODE BASE64
+    # print("Base64 is:", cryptedstr)
+    # print(type(cryptedstr))
     # print()
-    decryptStr = base64.b64decode(cryptedStr)
+    decryptstr = base64.b64decode(cryptedstr)
     # print("Decoded Base64 is:", decryptStr)
     # print(type(decryptStr))
     # print()
 
-    #DECRYPT
+    # DECRYPT
     generator2 = AES.new(key, AES.MODE_CBC, iv)
-    decrypt = generator2.decrypt(decryptStr)
+    decrypt = generator2.decrypt(decryptstr)
     # print("Decrypted data is")
     # print(decrypt)
     # print(type(decrypt))
@@ -522,8 +524,8 @@ workbookname = "{0} Compliance Report.xlsx".format(todaysDate)
 workbook = xlsxwriter.Workbook(workbookname)
 bold = workbook.add_format({'bold': True})
 worksheet = workbook.add_worksheet()
-badformat = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})  #  Light red fill with dark red text
-goodformat = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'}) #  Green fill with dark green text
+badformat = workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'})   # Light red fill with dark red text
+goodformat = workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'})  # Green fill with dark green text
 worksheet.write('A1', 'UserID', bold)
 worksheet.write('B1', 'First Name', bold)
 worksheet.write('C1', 'Last Name', bold)
