@@ -40,18 +40,18 @@ class Email:
         self._authUser = VAR_MAIL_AUTH_USERNAME
         self._authPassword = VAR_MAIL_AUTH_PASSWORD
         self._smtpServer = smtpserver
-        self._smtpPort = 587
+        self._smtpPort = VAR_MAIL_PORT
         self._reEmail = re.compile(r"[^@]+@[^@]+")
-        self._debug = False
+        self._debug = VAR_DEBUG
         self.clearRecipients()
         self.clearAttachments()
 
     def send(self):
         # Validate and send the email message represented by this object.
         if self._textBody is None and self._htmlBody is None:
-            raise Exception("Error! Must specify at least one body type (HTML or Text)")
+            logger.error("Error! Must specify at least one body type (HTML or Text)")
         if len(self._to) == 0:
-            raise Exception("Must specify at least one recipient")
+            logger.error("Must specify at least one recipient")
         # Create the message part
         if self._textBody is not None and self._htmlBody is None:
             msg = MIMEText(self._textBody, "plain")
@@ -68,10 +68,10 @@ class Email:
             msg.attach(tmpmsg)
         for fname, attachname in self._attach:
             if not os.path.exists(fname):
-                print("File '{}' does not exist.  Not attaching to email.".format(fname))
+                logger.error("File '{}' does not exist.  Not attaching to email.".format(fname))
                 continue
             if not os.path.isfile(fname):
-                print("Attachment '{}' is not a file.  Not attaching to email.".format(fname))
+                logger.error("Attachment '{}' is not a file.  Not attaching to email.".format(fname))
                 continue
             # Guess at encoding type
             ctype, encoding = mimetypes.guess_type(fname)
@@ -96,8 +96,7 @@ class Email:
                 attach = MIMEBase(maintype, subtype)
                 attach.set_payload(fp.read())
                 fp.close()
-                # Encode the payload using Base64
-                encoders.encode_base64(attach)
+                encoders.encode_base64(attach)  # Encode the payload using Base64
             # Set the filename parameter
             if attachname is None:
                 filename = os.path.basename(fname)
@@ -134,7 +133,7 @@ class Email:
     def setFrom(self, address):
         # Set the email sender.
         if not self.validateEmailAddress(address):
-            raise Exception("Invalid email address '%s'" % address)
+            logger.error("Invalid email address {0}".format(address))
         self._from = address
 
     def clearRecipients(self):
@@ -144,7 +143,7 @@ class Email:
     def addRecipient(self, address):
         # Add a new recipient to the email message.
         if not self.validateEmailAddress(address):
-            raise Exception("Invalid email address '%s'" % address)
+            logger.error("Invalid email address {0}".format(address))
         self._to.append(address)
 
     def setTextBody(self, body):
