@@ -1,8 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from axltoolkit import AxlToolkit
-from ldap3 import Server, Connection, SUBTREE
 import xml.etree.ElementTree as ElementTree
 import requests
 import yaml
@@ -11,20 +9,22 @@ import datetime
 import ast
 import os
 import re
+import xlsxwriter
 import mimetypes
 import logging
 import glob
-import xlsxwriter
+import base64
+import ruamel.yaml
+import getpass
+from axltoolkit import AxlToolkit
+from ldap3 import Server, Connection, SUBTREE
 from email import encoders
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from Crypto.Cipher import AES
-import base64
-import ruamel.yaml
-import getpass
+from Cryptodome.Cipher import AES
 
 class Email:
     # This class handles the creation and sending of email messages via SMTP.  This class also handles attachments and
@@ -308,12 +308,12 @@ def decrypt_data(cryptedStr):
     return final
 
 
-
 # --------- READ CONFIG AND GATHER PASSWORDS IF NEEDED --------- #
 with open("config.yml", 'r') as readconf:
     config = ruamel.yaml.load(readconf, ruamel.yaml.RoundTripLoader)
 
 # CHECK FOR MISSING CREDS AND IF MISSING GATHER AND ENCRYPT
+logger.info("Validating Credentials Present")
 for entry in VAR_CRED_VARIABLES:
     password = VAR_CRED_VARIABLES[entry]
     if not password:
@@ -323,39 +323,39 @@ for entry in VAR_CRED_VARIABLES:
             passwordencrypt = encrypt_data(ptpassword)
             config['ldap']['password'] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
         elif entry == "VAR_MAIL_AUTH_PASSWORD":
             passwordencrypt = encrypt_data(ptpassword)
             config["mail"]["auth_password"] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
         elif entry == "VAR_AXL1_PASSWORD":
             passwordencrypt = encrypt_data(ptpassword)
             config["cucm"]["cluster1"]["password"] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
         elif entry == "VAR_AXL2_PASSWORD":
             passwordencrypt = encrypt_data(ptpassword)
             config["cucm"]["cluster2"]["password"] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
         elif entry == "VAR_AXL3_PASSWORD":
             passwordencrypt = encrypt_data(ptpassword)
             config["cucm"]["cluster3"]["password"] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
         elif entry == "VAR_AXL4_PASSWORD":
             passwordencrypt = encrypt_data(ptpassword)
             config["cucm"]["cluster4"]["password"] = str(passwordencrypt)
             # print(type(passwordencrypt))
-            print("Encrypted password is", passwordencrypt)
+            # print("Encrypted password is", passwordencrypt)
 # THIS ELSE SHOULD NOT BE NEEDED BUT IS GOOD FOR DEBUGGING
     else:
-        print("Encrypted password found in config file:", password)
+        # print("Encrypted password found in config file:", password)
         foundencpassword = ast.literal_eval(password)
-        print(type(foundencpassword))
+        # print(type(foundencpassword))
         passworddecrypt = decrypt_data(foundencpassword)
-        print("The password in the config file is:",passworddecrypt)
+        # print("The password in the config file is:", passworddecrypt)
 
 # ONCE PASSWORD(S) ARE FOUND WRITE ENCRYPTED FORM TO CONFIG FILE
 with open('config.yml', 'w') as updatedconfig:
