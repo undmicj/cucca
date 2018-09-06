@@ -407,13 +407,17 @@ VAR_AXL4_PASSWORD = VAR_CRED_VARIABLES["VAR_AXL4_PASSWORD"]
 
 # Create AXL Instances
 axl1 = AxlToolkit(username=config["cucm"]["cluster1"]["username"], password=VAR_AXL1_PASSWORD,
-                  server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False, version='12.0')
+                  server_ip=config["cucm"]["cluster1"]["server_ip"], tls_verify=False,
+                  version=config["cucm"]["cluster1"]["version"])
 axl2 = AxlToolkit(username=config["cucm"]["cluster2"]["username"], password=VAR_AXL2_PASSWORD,
-                  server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False, version='12.0')
+                  server_ip=config["cucm"]["cluster2"]["server_ip"], tls_verify=False,
+                  version=config["cucm"]["cluster2"]["version"])
 axl3 = AxlToolkit(username=config["cucm"]["cluster3"]["username"], password=VAR_AXL3_PASSWORD,
-                  server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False, version='12.0')
+                  server_ip=config["cucm"]["cluster3"]["server_ip"], tls_verify=False,
+                  version=config["cucm"]["cluster3"]["version"])
 axl4 = AxlToolkit(username=config["cucm"]["cluster4"]["username"], password=VAR_AXL4_PASSWORD,
-                  server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False, version='12.0')
+                  server_ip=config["cucm"]["cluster4"]["server_ip"], tls_verify=False,
+                  version=config["cucm"]["cluster4"]["version"])
 
 # Execute LDAP Lookup, UDS Lookup, AXL Lookup
 ldapuserlist = ldaplookup()
