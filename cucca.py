@@ -370,22 +370,15 @@ with open("config.yml", 'r') as readconf2:  # IS THE 2 NEEDED HERE OR CAN WE USE
     logger.info("Reading Config File Again with All Creds")
     config = ruamel.yaml.load(readconf2, ruamel.yaml.RoundTripLoader)
 
-# READ IN CRED VARIABLES AGAIN (THEY WILL BE ENCRYPTED)
-VAR_LDAP_PASSWORD = config["ldap"]["password"]
-VAR_MAIL_AUTH_PASSWORD = config["mail"]["auth_password"]
-VAR_AXL1_PASSWORD = config["cucm"]["cluster1"]["password"]
-VAR_AXL2_PASSWORD = config["cucm"]["cluster2"]["password"]
-VAR_AXL3_PASSWORD = config["cucm"]["cluster3"]["password"]
-VAR_AXL4_PASSWORD = config["cucm"]["cluster4"]["password"]
 
-# MIGHT HAVE TO UPDATE CRED DICTIONARY AGAIN
+# READ IN CRED VARIABLES AGAIN (THEY WILL BE ENCRYPTED) AND UPDATE CRED DICTIONARY AGAIN
 VAR_CRED_VARIABLES = {
-    "VAR_LDAP_PASSWORD": VAR_LDAP_PASSWORD,
-    "VAR_MAIL_AUTH_PASSWORD": VAR_MAIL_AUTH_PASSWORD,
-    "VAR_AXL1_PASSWORD": VAR_AXL1_PASSWORD,
-    "VAR_AXL2_PASSWORD": VAR_AXL2_PASSWORD,
-    "VAR_AXL3_PASSWORD": VAR_AXL3_PASSWORD,
-    "VAR_AXL4_PASSWORD": VAR_AXL4_PASSWORD
+    "VAR_LDAP_PASSWORD": config["ldap"]["password"],
+    "VAR_MAIL_AUTH_PASSWORD": config["mail"]["auth_password"],
+    "VAR_AXL1_PASSWORD": config["cucm"]["cluster1"]["password"],
+    "VAR_AXL2_PASSWORD": config["cucm"]["cluster2"]["password"],
+    "VAR_AXL3_PASSWORD": config["cucm"]["cluster3"]["password"],
+    "VAR_AXL4_PASSWORD": config["cucm"]["cluster4"]["password"]
 }
 
 # ITERATE CREDS AND DECRYPT
